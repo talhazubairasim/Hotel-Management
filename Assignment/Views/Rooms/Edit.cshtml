@@ -1,0 +1,240 @@
+﻿@model Assignment.ViewModels.RoomViewModel
+@{
+    ViewData["Title"] = "Edit Room";
+    var hotels = ViewBag.Hotels as List<Assignment.Models.Hotel>;
+}
+
+<h2>Edit Room</h2>
+
+<form asp-action="Edit" id="roomForm" method="post" class="mt-3">
+    <input type="hidden" asp-for="RoomId" />
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Name <span class="text-danger">*</span></label>
+        <input asp-for="Name" class="form-control" id="Name" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+        <div id="roomError" class="text-danger"></div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Floor" class="form-label">Floor <span class="text-danger">*</span></label>
+        <input asp-for="Floor" type="number" class="form-control" id="Floor" min="1" />
+        <span asp-validation-for="Floor" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="HotelId" class="form-label">Hotel <span class="text-danger">*</span></label>
+        <select asp-for="HotelId" class="form-control" id="HotelId">
+            <option value="">-- Select Hotel --</option>
+            @if (hotels != null && hotels.Count > 0)
+            {
+                foreach (var hotel in hotels)
+                {
+                    <option value="@hotel.HotelId" selected="@(Model.HotelId == hotel.HotelId)">
+                        @hotel.Name
+                    </option>
+                }
+            }
+        </select>
+        <span asp-validation-for="HotelId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Type" class="form-label">Type <span class="text-danger">*</span></label>
+        <select asp-for="Type" class="form-control">
+            <option value="">-- Select Type --</option>
+            <option value="Basic" selected="@(Model.Type == "Basic")">Basic</option>
+            <option value="Luxury" selected="@(Model.Type == "Luxury")">Luxury</option>
+            <option value="Deluxe" selected="@(Model.Type == "Deluxe")">Deluxe</option>
+        </select>
+        <span asp-validation-for="Type" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Charges" class="form-label">Charges <span class="text-danger">*</span></label>
+        <input asp-for="Charges" type="number" class="form-control" step="0.01" min="0" />
+        <span asp-validation-for="Charges" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary" id="saveBtn">
+        <span id="saveText">Update</span>
+        <span id="saveSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+    </button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <!-- Toastr CSS and JS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        // Configure toastr options
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        function checkRoomAvailability() {
+            var name = $('#Name').val().trim();
+            var floor = $('#Floor').val();
+            var hotelId = $('#HotelId').val();
+            var id = $('input[name="RoomId"]').val();
+
+            if (!name || !floor || !hotelId) {
+                $('#roomError').text('');
+                return;
+            }
+
+            $.get('@Url.Action("IsRoomAvailable", "Rooms")', {
+                name: name,
+                floor: floor,
+                hotelId: hotelId,
+                id: id
+            }, function (isAvailable) {
+                if (isAvailable === true || isAvailable === 'true') {
+                    $('#roomError').text('');
+                } else {
+                    $('#roomError').text('A room with the same name and floor already exists in this hotel.');
+                }
+            });
+        }
+
+        $('#Name').on('blur', function () {
+            checkRoomAvailability();
+        });
+
+        $('#Floor').on('blur', function () {
+            checkRoomAvailability();
+        });
+
+        $('#HotelId').on('change', function () {
+            $('#roomError').text('');
+            checkRoomAvailability();
+        });
+
+        function showLoadingState(show) {
+            if (show) {
+                $('#saveText').addClass('d-none');
+                $('#saveSpinner').removeClass('d-none');
+                $('#saveBtn').prop('disabled', true);
+            } else {
+                $('#saveText').removeClass('d-none');
+                $('#saveSpinner').addClass('d-none');
+                $('#saveBtn').prop('disabled', false);
+            }
+        }
+
+        $('#roomForm').on('submit', function (e) {
+            e.preventDefault();
+
+            // Clear previous server-side validation errors
+            $('.text-danger').not('#roomError').text('');
+
+            var name = $('#Name').val().trim();
+            var floor = $('#Floor').val();
+            var hotelId = $('#HotelId').val();
+            var id = $('input[name="RoomId"]').val();
+
+            if (!name || !floor || !hotelId) {
+                toastr.warning('Please fill in all required fields.');
+                return;
+            }
+
+            showLoadingState(true);
+
+            // First check room availability
+            $.get('@Url.Action("IsRoomAvailable", "Rooms")', {
+                name: name,
+                floor: floor,
+                hotelId: hotelId,
+                id: id
+            }, function (isAvailable) {
+                if (isAvailable === true || isAvailable === 'true') {
+                    $('#roomError').text('');
+
+                    // Submit the form via AJAX
+                    $.ajax({
+                        url: $('#roomForm').attr('action'),
+                        type: 'POST',
+                        data: $('#roomForm').serialize(),
+                        success: function (response) {
+                            showLoadingState(false);
+
+                            if (response.success === false) {
+                                toastr.error(response.message || 'Error occurred while updating the room.');
+                            } else {
+                                toastr.success('Room updated successfully!');
+                                // Redirect after showing success message
+                                setTimeout(function () {
+                                    window.location.href = '@Url.Action("Index", "Rooms")';
+                                }, 1500);
+                            }
+                        },
+                        error: function (xhr) {
+                            showLoadingState(false);
+
+                            if (xhr.status === 400) {
+                                // Handle validation errors
+                                try {
+                                    var response = JSON.parse(xhr.responseText);
+                                    if (response.errors) {
+                                        // Display validation errors
+                                        $.each(response.errors, function(field, messages) {
+                                            var fieldElement = $('[data-valmsg-for="' + field + '"]');
+                                            if (fieldElement.length > 0) {
+                                                fieldElement.text(messages.join(', '));
+                                            }
+                                        });
+                                        toastr.error('Please correct the validation errors.');
+                                    } else {
+                                        toastr.error(response.message || 'Validation failed.');
+                                    }
+                                } catch (e) {
+                                    toastr.error('Please correct the form errors and try again.');
+                                }
+                            } else {
+                                toastr.error('An unexpected error occurred. Please try again.');
+                            }
+                        }
+                    });
+
+                } else {
+                    showLoadingState(false);
+                    $('#roomError').text('A room with the same name and floor already exists in this hotel.');
+                    toastr.error('A room with the same name and floor already exists in this hotel.');
+                    $('#Name').focus();
+                }
+            }).fail(function() {
+                showLoadingState(false);
+                toastr.error('Error checking room availability. Please try again.');
+            });
+        });
+
+        // Show server-side messages if they exist
+        @if (TempData["SuccessMessage"] != null)
+        {
+                <text>toastr.success('@Html.Raw(TempData["SuccessMessage"])');</text>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+                <text>toastr.error('@Html.Raw(TempData["ErrorMessage"])');</text>
+        }
+    </script>
+}

@@ -1,0 +1,316 @@
+﻿@model Assignment.ViewModels.ReservationViewModel
+@{
+    ViewData["Title"] = "Reserve Room";
+}
+
+<h2><i class="fa fa-calendar"></i> Reserve Room</h2>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fa fa-search"></i> Search Available Rooms</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="SearchRooms" method="post" class="row g-3">
+            <div class="col-md-5">
+                <label asp-for="FromDate" class="form-label fw-bold">
+                    <i class="fa fa-calendar-o"></i> From <span class="text-danger">*</span>
+                </label>
+                <input asp-for="FromDate"
+                       type="datetime-local"
+                       class="form-control"
+                       id="FromDate"
+                       min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+                       value="@Model.FromDate.ToString("yyyy-MM-ddTHH:mm")" />
+                <span asp-validation-for="FromDate" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-5">
+                <label asp-for="ToDate" class="form-label fw-bold">
+                    <i class="fa fa-calendar"></i> To <span class="text-danger">*</span>
+                </label>
+                <input asp-for="ToDate"
+                       type="datetime-local"
+                       class="form-control"
+                       id="ToDate"
+                       min="@DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm")"
+                       value="@Model.ToDate.ToString("yyyy-MM-ddTHH:mm")" />
+                <span asp-validation-for="ToDate" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fa fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.AvailableRooms.Any())
+{
+    <div class="card">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fa fa-bed"></i> Available Rooms</h5>
+            <span class="badge bg-light text-dark">@Model.AvailableRooms.Count found</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th><i class="fa fa-building"></i> Hotel Name</th>
+                            <th><i class="fa fa-door-open"></i> Room Name</th>
+                            <th><i class="fa fa-sort-numeric-asc"></i> Floor</th>
+                            <th><i class="fa fa-star"></i> Room Type</th>
+                            <th><i class="fa fa-usd"></i> Charges</th>
+                            <th><i class="fa fa-calendar-check-o"></i> Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var room in Model.AvailableRooms)
+                        {
+                            <tr class="align-middle">
+                                <td class="fw-semibold text-primary">@room.HotelName</td>
+                                <td class="fw-semibold">@room.RoomName</td>
+                                <td>
+                                    <span class="badge bg-info">Floor @room.Floor</span>
+                                </td>
+                                <td>
+                                    <span class="badge @(room.Type == "Luxury" ? "bg-warning text-dark" :
+                                                                                                                                              room.Type == "Deluxe" ? "bg-success" : "bg-secondary")">
+                                @room.Type
+                            </span>
+                        </td>
+                        <td class="fw-bold text-success">
+                            $@room.Charges
+                        </td>
+                        <td>
+                            <form class="reserveForm" asp-action="ReserveRoom" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="RoomId" value="@room.RoomId" />
+                                <input type="hidden" name="From"
+                                       class="from-date"
+                                       value="@Model.FromDate.ToString("o")" />
+                                <input type="hidden" name="To"
+                                       class="to-date"
+                                       value="@Model.ToDate.ToString("o")" />
+                                <div class="input-group input-group-sm">
+                                    <input type="text" name="Name" placeholder="Customer Name" required
+                                           class="form-control" style="max-width: 150px;" />
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fa fa-calendar-check-o"></i> Reserve
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer text-muted">
+            <i class="fa fa-info-circle"></i>
+            Rooms are sorted by Room Type. Enter customer name and click Reserve to book.
+        </div>
+    </div>
+}
+
+@if (Model.AvailableRooms.Any())
+{
+    <div class="card mt-3">
+        <div class="card-body">
+            <h6 class="card-title"><i class="fa fa-calculator"></i> Reservation Summary</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Selected Dates:</strong> <span id="dateRange">-</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Duration:</strong> <span id="duration">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        $(document).off('submit', '.reserveForm');
+
+        $(document).on("click", ".reserveForm button[type='submit']", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var form = $(this).closest('form');
+            const roomName = form.closest('tr').find('td:eq(1)').text().trim();
+            const hotelName = form.closest('tr').find('td:eq(0)').text().trim();
+            const chargesText = form.closest('tr').find('td:eq(4)').text().trim().replace('$','');
+            const charges = parseFloat(chargesText) || 0;
+            const customerName = (form.find("input[name='Name']").val() || '').trim();
+
+            const fromDateValue = form.find("input[name='From']").val();
+            const toDateValue = form.find("input[name='To']").val();
+
+            const fromDate = new Date(fromDateValue);
+            const toDate = new Date(toDateValue);
+            const durationMs = toDate - fromDate;
+            const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
+            const totalDays = (durationMs / (1000 * 60 * 60 * 24));
+            const totalCost = Math.round(charges * totalDays);
+
+            if (!customerName) {
+                toastr.warning("Please enter customer name");
+                form.find("input[name='Name']").focus();
+                return false;
+            }
+
+            const confirmationMessage =
+                `Confirm Reservation Details:\n\n` +
+                `Customer: ${customerName}\n` +
+                `Hotel: ${hotelName}\n` +
+                `Room: ${roomName}\n` +
+                `From: ${fromDate.toLocaleString()}\n` +
+                `To: ${toDate.toLocaleString()}\n` +
+                `Duration: ${durationHours} hrs (~${totalDays.toFixed(2)} days)\n` +
+                `Rate: $${charges} per day\n` +
+                `Total Cost: $${totalCost}\n\n` +
+                `Proceed with reservation?`;
+
+            if (confirm(confirmationMessage)) {
+                var button = $(this);
+                var originalText = button.html();
+                button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+
+                $.ajax({
+                    url: form.attr("action"),
+                    type: "POST",
+                    data: form.serialize(),
+                    success: function (response) {
+                        button.prop('disabled', false).html(originalText);
+
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(function () {
+                                window.location.href = "/Reservations/ViewReservations";
+                            }, 1500);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        button.prop('disabled', false).html(originalText);
+                        toastr.error("An error occurred while processing your reservation. Please try again.");
+                    }
+                });
+            }
+
+            return false;
+        });
+
+        function calculateDurationHours() {
+            var fromDate = $('#FromDate').val();
+            var toDate = $('#ToDate').val();
+
+            if (fromDate && toDate) {
+                var from = new Date(fromDate);
+                var to = new Date(toDate);
+                var diffTime = to - from;
+                return Math.ceil(diffTime / (1000 * 60 * 60));
+            }
+            return 0;
+        }
+
+        function validateDates() {
+            var fromDate = $('#FromDate').val();
+            var toDate = $('#ToDate').val();
+
+            if (fromDate && toDate && toDate <= fromDate) {
+                toastr.error('To date must be after From date');
+                $('#ToDate').val('');
+                updateDateInfo();
+            }
+
+            if (fromDate) {
+                var nextHour = new Date(fromDate);
+                nextHour.setHours(nextHour.getHours() + 1);
+                $('#ToDate').attr('min', nextHour.toISOString().slice(0, 16));
+            }
+        }
+
+        function updateDateInfo() {
+            var fromDate = $('#FromDate').val();
+            var toDate = $('#ToDate').val();
+
+            if (fromDate && toDate) {
+                var from = new Date(fromDate);
+                var to = new Date(toDate);
+                var durationHours = calculateDurationHours();
+                var durationDays = (durationHours / 24).toFixed(2);
+
+                $('#dateRange').text(`${from.toLocaleDateString()} to ${to.toLocaleDateString()}`);
+                $('#duration').text(`${durationHours} hrs (~${durationDays} days)`);
+
+                function formatLocalDateTime(date) {
+                    const pad = (n) => (n < 10 ? '0' + n : n);
+                    return date.getFullYear() + '-' +
+                           pad(date.getMonth() + 1) + '-' +
+                           pad(date.getDate()) + 'T' +
+                           pad(date.getHours()) + ':' +
+                           pad(date.getMinutes());
+                }
+
+                $('.from-date').val(formatLocalDateTime(from));
+                $('.to-date').val(formatLocalDateTime(to));
+            } else {
+                $('#dateRange').text('-');
+                $('#duration').text('-');
+            }
+        }
+
+        $(document).ready(function() {
+            $('#FromDate, #ToDate').on('change', function() {
+                validateDates();
+                updateDateInfo();
+            });
+            updateDateInfo();
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                    <text>toastr.success('@Html.Raw(TempData["SuccessMessage"])');</text>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                    <text>toastr.error('@Html.Raw(TempData["ErrorMessage"])');</text>
+            }
+
+            @if (TempData["InfoMessage"] != null)
+            {
+                    <text>toastr.info('@Html.Raw(TempData["InfoMessage"])');</text>
+            }
+        });
+    </script>
+}

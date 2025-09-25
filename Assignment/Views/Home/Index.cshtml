@@ -1,0 +1,52 @@
+﻿@model Assignment.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container mt-5">
+    <!-- Hero Section -->
+    <div class="text-center bg-dark text-white p-5 rounded-3 shadow-lg"
+         style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                url('/images/hotel-bg.jpg') center/cover no-repeat;">
+        <h1 class="display-4 fw-bold">🏨 Welcome, Admin</h1>
+        <p class="lead">Hotel Management System Admin Portal</p>
+        <a href="/Hotels" class="btn btn-primary btn-lg mt-3">Manage Hotels</a>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mt-5 text-center">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 p-3">
+                <h3 class="fw-bold">@Model.HotelsCount</h3>
+                <p class="text-muted">Hotels</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 p-3">
+                <h3 class="fw-bold">@Model.RoomsCount</h3>
+                <p class="text-muted">Active Rooms</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 p-3">
+                <h3 class="fw-bold">@Model.ActiveReservationsCount</h3>
+                <p class="text-muted">Active Reservations</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 p-3">
+                <h3 class="fw-bold">@Model.TotalReservationsCount</h3>
+                <p class="text-muted">Total Reservations (Customers)</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row mt-5 text-center">
+        <div class="col-md-3"><a href="/Hotels" class="btn btn-outline-primary w-100 p-3 rounded-3">🏨 Manage Hotels</a></div>
+        <div class="col-md-3"><a href="/Rooms" class="btn btn-outline-success w-100 p-3 rounded-3">🛏 Manage Rooms</a></div>
+        <div class="col-md-3"><a href="/Reservations/ViewReservations" class="btn btn-outline-warning w-100 p-3 rounded-3">📅 Reservations</a></div>
+        <div class="col-md-3"><a href="/Reservations" class="btn btn-outline-info w-100 p-3 rounded-3">👤 Reserve</a></div>
+    </div>
+</div>

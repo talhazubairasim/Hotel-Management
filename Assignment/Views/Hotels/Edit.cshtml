@@ -1,0 +1,96 @@
+﻿@model Assignment.ViewModels.HotelViewModel
+
+@{
+    ViewData["Title"] = "Edit Hotel";
+}
+
+<h2>Edit Hotel</h2>
+
+<form asp-action="Edit" id="hotelForm" method="post" class="mt-3">
+    <input type="hidden" asp-for="HotelId" />
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Name <span class="text-danger">*</span></label>
+        <input asp-for="Name" class="form-control" id="Name" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+        <div id="nameError" class="text-danger"></div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Address" class="form-label">Address</label>
+        <input asp-for="Address" class="form-control" />
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Rating" class="form-label">Rating <span class="text-danger">*</span></label>
+        <select asp-for="Rating" class="form-select">
+            <option value="">-- Select Rating --</option>
+            <option value="1-star">1-star</option>
+            <option value="2-star">2-star</option>
+            <option value="3-star">3-star</option>
+            <option value="4-star">4-star</option>
+            <option value="5-star">5-star</option>
+        </select>
+        <span asp-validation-for="Rating" class="text-danger"></span>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="TotalFloors" class="form-label">Total Floors <span class="text-danger">*</span></label>
+            <input asp-for="TotalFloors" class="form-control" type="number" min="1" />
+            <span asp-validation-for="TotalFloors" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="TotalRooms" class="form-label">Total Rooms <span class="text-danger">*</span></label>
+            <input asp-for="TotalRooms" class="form-control" type="number" min="1" />
+            <span asp-validation-for="TotalRooms" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="RoomsPerFloor" class="form-label">Rooms Per Floor</label>
+            <input asp-for="RoomsPerFloor" class="form-control" type="number" min="0" />
+            <span asp-validation-for="RoomsPerFloor" class="text-danger"></span>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" id="saveBtn">Update</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $('#Name').on('blur', function () {
+            var name = $(this).val().trim();
+            var id = $('input[name="HotelId"]').val();
+            if (!name) { $('#nameError').text(''); return; }
+            $.get('@Url.Action("IsNameAvailable", "Hotels")', { name: name, id: id }, function (isAvailable) {
+                if (isAvailable === true || isAvailable === 'true') {
+                    $('#nameError').text('');
+                } else {
+                    $('#nameError').text('Hotel with this name already exists.');
+                }
+            });
+        });
+
+        $('#hotelForm').on('submit', function (e) {
+            e.preventDefault();
+            var name = $('#Name').val().trim();
+            var id = $('input[name="HotelId"]').val();
+            if (!name) {
+                $(this).submit();
+                return;
+            }
+            $.get('@Url.Action("IsNameAvailable", "Hotels")', { name: name, id: id }, function (isAvailable) {
+                if (isAvailable === true || isAvailable === 'true') {
+                    $('#nameError').text('');
+                    $('#hotelForm')[0].submit();
+                } else {
+                    $('#nameError').text('Hotel with this name already exists.');
+                    $('#Name').focus();
+                }
+            });
+        });
+    </script>
+}

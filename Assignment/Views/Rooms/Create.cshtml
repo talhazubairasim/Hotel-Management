@@ -1,0 +1,102 @@
+﻿@model Assignment.ViewModels.RoomViewModel
+
+@{
+    ViewData["Title"] = "Create Room";
+    var hotels = ViewBag.Hotels as List<Assignment.Models.Hotel>;
+}
+
+<h2>Create Room</h2>
+
+<form asp-action="Create" asp-controller="Rooms" id="roomForm" method="post" class="mt-3">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Name <span class="text-danger">*</span></label>
+        <input asp-for="Name" class="form-control" id="RoomName" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+        <div id="nameError" class="text-danger"></div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Floor" class="form-label">Floor <span class="text-danger">*</span></label>
+        <input asp-for="Floor" type="number" class="form-control" />
+        <span asp-validation-for="Floor" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="HotelId" class="form-label">Hotel <span class="text-danger">*</span></label>
+        <select asp-for="HotelId" class="form-control">
+            <option value="">-- Select Hotel --</option>
+            @foreach (var hotel in hotels ?? new List<Assignment.Models.Hotel>())
+            {
+                <option value="@hotel.HotelId">@hotel.Name</option>
+            }
+        </select>
+        <span asp-validation-for="HotelId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Type" class="form-label">Type <span class="text-danger">*</span></label>
+        <select asp-for="Type" class="form-control">
+            <option value="">-- Select Type --</option>
+            <option>Basic</option>
+            <option>Luxury</option>
+            <option>Deluxe</option>
+        </select>
+        <span asp-validation-for="Type" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Charges" class="form-label">Charges <span class="text-danger">*</span></label>
+        <input asp-for="Charges" type="number" class="form-control" />
+        <span asp-validation-for="Charges" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $('#RoomName').on('blur', function () {
+            var name = $(this).val().trim();
+            var floor = $('input[name="Floor"]').val();
+
+            if (!name || !floor) { $('#nameError').text(''); return; }
+
+            $.get('@Url.Action("IsRoomAvailable", "Rooms")',
+                { name: name, floor: floor },
+                function (isAvailable) {
+                    if (isAvailable === true || isAvailable === 'true') {
+                        $('#nameError').text('');
+                    } else {
+                        $('#nameError').text('A room with this name and floor already exists.');
+                    }
+                });
+        });
+
+        $('#roomForm').on('submit', function (e) {
+            e.preventDefault();
+            var name = $('#RoomName').val().trim();
+            var floor = $('input[name="Floor"]').val();
+
+            if (!name || !floor) {
+                $(this)[0].submit();
+                return;
+            }
+
+            $.get('@Url.Action("IsRoomAvailable", "Rooms")',
+                { name: name, floor: floor },
+                function (isAvailable) {
+                    if (isAvailable === true || isAvailable === 'true') {
+                        $('#nameError').text('');
+                        $('#roomForm')[0].submit();
+                    } else {
+                        $('#nameError').text('A room with this name and floor already exists.');
+                        $('#RoomName').focus();
+                    }
+                });
+        });
+    </script>
+}
