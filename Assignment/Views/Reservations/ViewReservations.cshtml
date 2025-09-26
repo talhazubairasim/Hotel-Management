@@ -543,7 +543,7 @@ else
                         <td class="fw-semibold">${room.roomName}</td>
                         <td><span class="badge bg-info">Floor ${room.floor}</span></td>
                         <td><span class="badge ${typeClass}">${room.type}</span></td>
-                        <td class="fw-bold text-success">$${parseFloat(room.charges).toFixed(2)}</td>
+                        <td>${room.charges.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</td>                        
                         <td>
                             <div class="input-group input-group-sm">
                                 <input type="text" placeholder="Customer Name" required
@@ -661,16 +661,7 @@ else
             $('#modalToDate').on('change', function() {
                 validateModalDates();
                 updateModalDateInfo();
-            }); 
-
-            // $('#reservationsTable').DataTable({
-            //     "order": [],
-            //     "pageLength": 10,
-            //     "lengthMenu": [5, 10, 25, 50],
-            //     "columnDefs": [
-            //         { "orderable": false, "targets": -1 }
-            //     ]
-            // });
+            });
 
 
             $('#searchRoomsForm').on('submit', function(e) {
