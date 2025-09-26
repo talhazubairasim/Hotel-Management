@@ -108,8 +108,8 @@ namespace Assignment.Controllers
 
                 double totalDays = (model.To - model.From).TotalDays;
                 int durationHours = (int)Math.Ceiling((model.To - model.From).TotalHours);
-                decimal dailyRate = room.Charges;
-                int totalCharges = (int)Math.Round(totalDays * (double)dailyRate, MidpointRounding.AwayFromZero);
+                double dailyRate = room.Charges;
+                double totalCharges = Math.Round(totalDays * (double)dailyRate, MidpointRounding.AwayFromZero);
 
                 Reservation reservation = new Reservation
                 {

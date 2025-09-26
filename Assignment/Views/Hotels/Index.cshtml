@@ -38,7 +38,7 @@
                 <tbody>
                     @foreach (var h in Model)
                     {
-                        <tr>
+                        <tr id="hotel-@h.HotelId">
                             <td class="fw-semibold">@h.Name</td>
                             <td>@h.Address</td>
                             <td>
@@ -176,9 +176,10 @@
                     success: function (response) {
                         if (response.success) {
                             toastr.success(response.message, "Deleted");
-                            $(`#hotelsTable tr:has(td:contains("${hotelName}"))`).fadeOut(800, function () {
+                            $(`#hotel-${hotelId}`).fadeOut(800, function () {
                                 $(this).remove();
                             });
+
                         } else {
                             toastr.error(response.message, "Error");
                         }

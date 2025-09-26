@@ -41,7 +41,7 @@ namespace Assignment.ViewModels
         [Required]
         public DateTime To { get; set; }
 
-        public int Cost { get; set; }
+        public double Cost { get; set; }
 
         public int DurationHours { get; set; }
 

@@ -44,8 +44,8 @@
             <span asp-validation-for="TotalRooms" class="text-danger"></span>
         </div>
         <div class="col-md-4 mb-3">
-            <label asp-for="RoomsPerFloor" class="form-label">Rooms Per Floor</label>
-            <input asp-for="RoomsPerFloor" class="form-control" type="number" min="0" />
+            <label asp-for="RoomsPerFloor" class="form-label">Rooms Per Floor <span class="text-danger">*</span></label>
+            <input asp-for="RoomsPerFloor" class="form-control" type="number" min="1" />
             <span asp-validation-for="RoomsPerFloor" class="text-danger"></span>
         </div>
     </div>

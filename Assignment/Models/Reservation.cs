@@ -15,7 +15,7 @@ public partial class Reservation
 
     public DateTime To { get; set; }
 
-    public int Cost { get; set; }
+    public double Cost { get; set; }
 
     public int DurationHours { get; set; }
 

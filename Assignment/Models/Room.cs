@@ -15,7 +15,7 @@ public partial class Room
 
     public string Type { get; set; } = null!;
 
-    public int Charges { get; set; }
+    public double Charges { get; set; }
 
     public bool IsActive { get; set; } = true;
 

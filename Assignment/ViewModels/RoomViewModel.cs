@@ -22,6 +22,6 @@ namespace Assignment.ViewModels
 
         [Required(ErrorMessage = "Charges are required")]
         [Range(1, int.MaxValue, ErrorMessage = "Charges must be a positive integer")]
-        public int Charges { get; set; }
+        public double Charges { get; set; }
     }
 }

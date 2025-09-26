@@ -37,7 +37,7 @@
         <div class="card bg-info text-white shadow-sm">
             <div class="card-body text-center">
                 <i class="fas fa-dollar-sign fa-2x mb-2"></i>
-                <h4>$@reservations.Sum(r => r.Cost).ToString("N0")</h4>
+                <h4>$@reservations.Sum(r => r.Cost).ToString("N2")</h4>
                 <p class="mb-0">Total Revenue</p>
             </div>
         </div>
@@ -95,7 +95,7 @@
                                 @reservation.DurationHours hour@(reservation.DurationHours != 1 ? "s" : "")
                             </span>
                         </td>
-                        <td class="fw-bold text-success">$@reservation.Cost.ToString("N0")</td>
+                        <td class="fw-bold text-success">$@reservation.Cost.ToString("N2")</td>
                         <td>
                             @if (isActive)
                                     {
@@ -264,6 +264,9 @@ else
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+   @*  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script> *@
 
     <style>
         .modal-lg {
@@ -540,7 +543,7 @@ else
                         <td class="fw-semibold">${room.roomName}</td>
                         <td><span class="badge bg-info">Floor ${room.floor}</span></td>
                         <td><span class="badge ${typeClass}">${room.type}</span></td>
-                        <td class="fw-bold text-success">${room.charges}</td>
+                        <td class="fw-bold text-success">$${parseFloat(room.charges).toFixed(2)}</td>
                         <td>
                             <div class="input-group input-group-sm">
                                 <input type="text" placeholder="Customer Name" required
@@ -582,7 +585,7 @@ else
             const durationMs = toDate - fromDate;
             const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
             const totalDays = (durationMs / (1000 * 60 * 60 * 24));
-            const totalCost = Math.round(charges * totalDays);
+            const totalCost = charges * totalDays;
 
             function formatLocalDateTime(date) {
                 const pad = (n) => (n < 10 ? '0' + n : n);
@@ -601,8 +604,8 @@ else
                 `From: ${fromDate.toLocaleString()}\n` +
                 `To: ${toDate.toLocaleString()}\n` +
                 `Duration: ${durationHours} hrs (~${totalDays.toFixed(2)} days)\n` +
-                `Rate: $${charges} per day\n` +
-                `Total Cost: $${totalCost}\n\n` +
+                `Rate: $${charges.toFixed(2)} per day\n` +
+                `Total Cost: $${totalCost.toFixed(2)}\n\n` +
                 `Proceed with reservation?`;
 
             if (confirm(confirmationMessage)) {
@@ -658,7 +661,17 @@ else
             $('#modalToDate').on('change', function() {
                 validateModalDates();
                 updateModalDateInfo();
-            });
+            }); 
+
+            // $('#reservationsTable').DataTable({
+            //     "order": [],
+            //     "pageLength": 10,
+            //     "lengthMenu": [5, 10, 25, 50],
+            //     "columnDefs": [
+            //         { "orderable": false, "targets": -1 }
+            //     ]
+            // });
+
 
             $('#searchRoomsForm').on('submit', function(e) {
                 e.preventDefault();

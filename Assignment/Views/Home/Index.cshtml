@@ -326,7 +326,6 @@
             const totalDays = (durationMs / (1000 * 60 * 60 * 24));
             const totalCost = Math.round(charges * totalDays);
 
-            // Helper function for consistent local time formatting
             function formatLocalDateTime(date) {
                 const pad = (n) => (n < 10 ? '0' + n : n);
                 return date.getFullYear() + '-' +
