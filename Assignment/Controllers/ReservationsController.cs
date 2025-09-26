@@ -16,77 +16,62 @@ namespace Assignment.Controllers
 
         public IActionResult Index()
         {
-            ReservationViewModel model = new ReservationViewModel();
-            return View(model);
+            return RedirectToAction("ViewReservations");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SearchRooms(ReservationViewModel model)
+        public async Task<IActionResult> SearchRooms(DateTime FromDate, DateTime ToDate)
         {
-            if (!ModelState.IsValid)
-            {
-                return View("Index", model);
-            }
-
-            DateTime now = DateTime.Now;
-            if (model.FromDate < now)
-            {
-                ModelState.AddModelError(nameof(model.FromDate), "From date cannot be in the past");
-                return View("Index", model);
-            }
-
-            if (model.ToDate < now)
-            {
-                ModelState.AddModelError(nameof(model.ToDate), "To date cannot be in the past");
-                return View("Index", model);
-            }
-
-            if (model.FromDate >= model.ToDate)
-            {
-                ModelState.AddModelError(nameof(model.ToDate), "To date must be after From date");
-                return View("Index", model);
-            }
-
             try
             {
+                DateTime now = DateTime.Now;
+
+                if (FromDate < now)
+                {
+                    return Json(new { success = false, message = "From date cannot be in the past" });
+                }
+
+                if (ToDate < now)
+                {
+                    return Json(new { success = false, message = "To date cannot be in the past" });
+                }
+
+                if (FromDate >= ToDate)
+                {
+                    return Json(new { success = false, message = "To date must be after From date" });
+                }
+
                 List<Guid> overlappingReservations = await _context.Reservations
-                    .Where(r => !(r.To <= model.FromDate || r.From >= model.ToDate))
+                    .Where(r => !(r.To <= FromDate || r.From >= ToDate))
                     .Select(r => r.RoomId)
                     .ToListAsync();
 
-                List<AvailableRoomViewModel> availableRooms = await _context.Rooms
+                var availableRooms = await _context.Rooms
                     .Where(r => !overlappingReservations.Contains(r.RoomId) && r.IsActive)
-                    .Select(r => new AvailableRoomViewModel
-                    {
-                        RoomId = r.RoomId,
-                        RoomName = r.Name,
-                        HotelName = r.Hotel.Name,
-                        Floor = r.Floor,
-                        Type = r.Type,
-                        Charges = r.Charges
+                    .Include(r => r.Hotel)
+                    .Select(r => new {
+                        roomId = r.RoomId,
+                        roomName = r.Name,
+                        hotelName = r.Hotel.Name,
+                        floor = r.Floor,
+                        type = r.Type,
+                        charges = r.Charges
                     })
+                    .OrderBy(r => r.type == "Standard" ? 1 : r.type == "Deluxe" ? 2 : 3)
+                    .ThenBy(r => r.hotelName)
                     .ToListAsync();
 
-
-                model.AvailableRooms = availableRooms;
-
-                if (!availableRooms.Any())
+                return Json(new
                 {
-                    TempData["InfoMessage"] = "No rooms available for the selected dates.";
-                }
-                else
-                {
-                    TempData["SuccessMessage"] = $"{availableRooms.Count} room(s) found for your selected dates.";
-                }
+                    success = true,
+                    rooms = availableRooms
+                });
             }
             catch (Exception)
             {
-                TempData["ErrorMessage"] = "An error occurred while searching for rooms. Please try again.";
-                return View("Index", model);
+                return Json(new { success = false, message = "An error occurred while searching for rooms. Please try again." });
             }
-
-            return View("Index", model);
         }
 
         [HttpPost]
@@ -125,6 +110,7 @@ namespace Assignment.Controllers
                 int durationHours = (int)Math.Ceiling((model.To - model.From).TotalHours);
                 decimal dailyRate = room.Charges;
                 int totalCharges = (int)Math.Round(totalDays * (double)dailyRate, MidpointRounding.AwayFromZero);
+
                 Reservation reservation = new Reservation
                 {
                     ReservationId = Guid.NewGuid(),

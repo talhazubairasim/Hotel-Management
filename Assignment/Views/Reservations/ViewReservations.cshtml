@@ -7,9 +7,9 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fa fa-list"></i> All Reservations</h2>
-    <a asp-action="Index" class="btn btn-primary">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reservationModal">
         <i class="fa fa-plus"></i> New Reservation
-    </a>
+    </button>
 </div>
 
 <div class="row mb-3">
@@ -84,7 +84,7 @@
                                 <td><span class="badge bg-info">@reservation.Room.Floor</span></td>
                                 <td>
                                     <span class="badge @(reservation.Room.Type == "Luxury" ? "bg-warning text-dark" :
-                                                                                                     reservation.Room.Type == "Deluxe" ? "bg-success" : "bg-secondary")">
+                                                                                                    reservation.Room.Type == "Deluxe" ? "bg-success" : "bg-secondary")">
                                 @reservation.Room.Type
                             </span>
                         </td>
@@ -149,14 +149,184 @@ else
             <i class="fa fa-calendar-times-o fa-4x text-muted mb-3"></i>
             <h4>No Reservations Found</h4>
             <p class="text-muted">There are no reservations in the system yet.</p>
-            <a asp-action="Index" class="btn btn-primary"><i class="fa fa-plus"></i> Make First Reservation</a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reservationModal">
+                <i class="fa fa-plus"></i> Make First Reservation
+            </button>
         </div>
     </div>
 }
 
+<div class="modal fade reservation-modal" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="reservationModalLabel">
+                    <i class="fa fa-calendar"></i> Reserve Room
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body position-relative">
+                <div class="loading-overlay d-none" id="modalLoadingOverlay">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fa fa-search"></i> Search Available Rooms</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="searchRoomsForm" class="row g-3">
+                            @Html.AntiForgeryToken()
+                            <div class="col-md-5">
+                                <label for="modalFromDate" class="form-label fw-bold">
+                                    <i class="fa fa-calendar-o"></i> From <span class="text-danger">*</span>
+                                </label>
+                                <input type="datetime-local" class="form-control" id="modalFromDate" name="FromDate" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="modalToDate" class="form-label fw-bold">
+                                    <i class="fa fa-calendar"></i> To <span class="text-danger">*</span>
+                                </label>
+                                <input type="datetime-local" class="form-control" id="modalToDate" name="ToDate" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fa fa-search"></i> Search
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="availableRoomsSection" class="d-none">
+                    <div class="card">
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fa fa-bed"></i> Available Rooms</h6>
+                            <span class="badge bg-light text-dark" id="roomsFoundBadge">0 found</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th><i class="fa fa-building"></i> Hotel Name</th>
+                                            <th><i class="fa fa-door-open"></i> Room Name</th>
+                                            <th><i class="fa fa-sort-numeric-asc"></i> Floor</th>
+                                            <th><i class="fa fa-star"></i> Room Type</th>
+                                            <th><i class="fa fa-usd"></i> Charges</th>
+                                            <th><i class="fa fa-calendar-check-o"></i> Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="availableRoomsTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted">
+                            <i class="fa fa-info-circle"></i>
+                            Rooms are sorted by Room Type. Enter customer name and click Reserve to book.
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="fa fa-calculator"></i> Reservation Summary</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Selected Dates:</strong> <span id="modalDateRange">-</span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Duration:</strong> <span id="modalDuration">-</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="noRoomsMessage" class="d-none">
+                    <div class="alert alert-info text-center">
+                        <i class="fa fa-info-circle fa-2x mb-2"></i>
+                        <h5>No Rooms Available</h5>
+                        <p class="mb-0">No rooms are available for the selected dates. Please try different dates.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @Html.AntiForgeryToken()
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <style>
+        .modal-lg {
+            max-width: 900px;
+        }
+
+        .reservation-modal .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @@keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+    </style>
+
     <script>
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
         function cancelReservation(button) {
             var $btn = $(button);
             var reservationId = $btn.data('reservation-id');
@@ -204,5 +374,296 @@ else
                 });
             }
         }
+
+        function initializeModalDates() {
+            const now = new Date();
+            const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+            const dayAfter = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+
+            document.getElementById('modalFromDate').value = formatDateTimeLocal(nextHour);
+            document.getElementById('modalToDate').value = formatDateTimeLocal(dayAfter);
+
+            updateModalDateInfo();
+        }
+
+        function formatDateTimeLocal(date) {
+            const pad = (n) => (n < 10 ? '0' + n : n);
+            return date.getFullYear() + '-' +
+                   pad(date.getMonth() + 1) + '-' +
+                   pad(date.getDate()) + 'T' +
+                   pad(date.getHours()) + ':' +
+                   pad(date.getMinutes());
+        }
+
+        function validateModalDates() {
+            const fromDate = document.getElementById('modalFromDate').value;
+            const toDate = document.getElementById('modalToDate').value;
+
+            if (fromDate && toDate && new Date(toDate) <= new Date(fromDate)) {
+                toastr.error('To date must be after From date');
+                document.getElementById('modalToDate').value = '';
+                updateModalDateInfo();
+                return false;
+            }
+
+            if (fromDate) {
+                const nextHour = new Date(fromDate);
+                nextHour.setHours(nextHour.getHours() + 1);
+                document.getElementById('modalToDate').min = formatDateTimeLocal(nextHour);
+            }
+
+            return true;
+        }
+
+        function updateModalDateInfo() {
+            const fromDate = document.getElementById('modalFromDate').value;
+            const toDate = document.getElementById('modalToDate').value;
+
+            if (fromDate && toDate) {
+                const from = new Date(fromDate);
+                const to = new Date(toDate);
+                const durationMs = to - from;
+                const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
+                const durationDays = (durationHours / 24).toFixed(2);
+
+                document.getElementById('modalDateRange').textContent =
+                    `${from.toLocaleDateString()} to ${to.toLocaleDateString()}`;
+                document.getElementById('modalDuration').textContent =
+                    `${durationHours} hrs (~${durationDays} days)`;
+
+                function formatLocalDateTime(date) {
+                    const pad = (n) => (n < 10 ? '0' + n : n);
+                    return date.getFullYear() + '-' +
+                           pad(date.getMonth() + 1) + '-' +
+                           pad(date.getDate()) + 'T' +
+                           pad(date.getHours()) + ':' +
+                           pad(date.getMinutes());
+                }
+
+                document.querySelectorAll('.from-date-modal').forEach(input => {
+                    input.value = formatLocalDateTime(from);
+                });
+
+                document.querySelectorAll('.to-date-modal').forEach(input => {
+                    input.value = formatLocalDateTime(to);
+                });
+
+            } else {
+                document.getElementById('modalDateRange').textContent = '-';
+                document.getElementById('modalDuration').textContent = '-';
+            }
+        }
+
+        function showModalLoading(show) {
+            const overlay = document.getElementById('modalLoadingOverlay');
+            if (show) {
+                overlay.classList.remove('d-none');
+            } else {
+                overlay.classList.add('d-none');
+            }
+        }
+
+        function searchRooms() {
+            if (!validateModalDates()) return;
+
+            function formatLocalDateTime(date) {
+                const pad = (n) => (n < 10 ? '0' + n : n);
+                return date.getFullYear() + '-' +
+                       pad(date.getMonth() + 1) + '-' +
+                       pad(date.getDate()) + 'T' +
+                       pad(date.getHours()) + ':' +
+                       pad(date.getMinutes());
+            }
+
+            const fromDate = new Date(document.getElementById('modalFromDate').value);
+            const toDate = new Date(document.getElementById('modalToDate').value);
+
+            showModalLoading(true);
+
+            $.ajax({
+                url: '@Url.Action("SearchRooms", "Reservations")',
+                type: 'POST',
+                data: {
+                    FromDate: formatLocalDateTime(fromDate),
+                    ToDate: formatLocalDateTime(toDate),
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    showModalLoading(false);
+                    if (response.success) {
+                        displayAvailableRooms(response.rooms);
+                        if (response.rooms.length > 0) {
+                            toastr.success(`${response.rooms.length} room(s) found for your selected dates.`);
+                        } else {
+                            toastr.info('No rooms available for the selected dates.');
+                        }
+                    } else {
+                        toastr.error(response.message || 'Error searching for rooms');
+                        document.getElementById('availableRoomsSection').classList.add('d-none');
+                        document.getElementById('noRoomsMessage').classList.remove('d-none');
+                    }
+                },
+                error: function () {
+                    showModalLoading(false);
+                    toastr.error('An error occurred while searching for rooms');
+                    document.getElementById('availableRoomsSection').classList.add('d-none');
+                    document.getElementById('noRoomsMessage').classList.remove('d-none');
+                }
+            });
+        }
+
+        function displayAvailableRooms(rooms) {
+            const tbody = document.getElementById('availableRoomsTableBody');
+            const section = document.getElementById('availableRoomsSection');
+            const noRoomsMsg = document.getElementById('noRoomsMessage');
+            const badge = document.getElementById('roomsFoundBadge');
+
+            tbody.innerHTML = '';
+
+            if (rooms.length === 0) {
+                section.classList.add('d-none');
+                noRoomsMsg.classList.remove('d-none');
+                return;
+            }
+
+            section.classList.remove('d-none');
+            noRoomsMsg.classList.add('d-none');
+            badge.textContent = `${rooms.length} found`;
+
+            rooms.forEach(room => {
+                const typeClass = room.type === 'Luxury' ? 'bg-warning text-dark' :
+                                 room.type === 'Deluxe' ? 'bg-success' : 'bg-secondary';
+
+                const row = `
+                    <tr class="align-middle animate-fade-in">
+                        <td class="fw-semibold text-primary">${room.hotelName}</td>
+                        <td class="fw-semibold">${room.roomName}</td>
+                        <td><span class="badge bg-info">Floor ${room.floor}</span></td>
+                        <td><span class="badge ${typeClass}">${room.type}</span></td>
+                        <td class="fw-bold text-success">${room.charges}</td>
+                        <td>
+                            <div class="input-group input-group-sm">
+                                <input type="text" placeholder="Customer Name" required
+                                       class="form-control customer-name-input" style="max-width: 150px;"
+                                       data-room-id="${room.roomId}" />
+                                <button type="button" class="btn btn-success btn-sm reserve-btn"
+                                        data-room-id="${room.roomId}"
+                                        data-hotel-name="${room.hotelName}"
+                                        data-room-name="${room.roomName}"
+                                        data-charges="${room.charges}"
+                                        onclick="reserveRoom(this)">
+                                    <i class="fa fa-calendar-check-o"></i> Reserve
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function reserveRoom(button) {
+            const roomId = button.dataset.roomId;
+            const hotelName = button.dataset.hotelName;
+            const roomName = button.dataset.roomName;
+            const charges = parseFloat(button.dataset.charges);
+
+            const customerNameInput = document.querySelector(`input[data-room-id="${roomId}"]`);
+            const customerName = customerNameInput.value.trim();
+
+            if (!customerName) {
+                toastr.warning("Please enter customer name");
+                customerNameInput.focus();
+                return;
+            }
+
+            const fromDate = new Date(document.getElementById('modalFromDate').value);
+            const toDate = new Date(document.getElementById('modalToDate').value);
+            const durationMs = toDate - fromDate;
+            const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
+            const totalDays = (durationMs / (1000 * 60 * 60 * 24));
+            const totalCost = Math.round(charges * totalDays);
+
+            function formatLocalDateTime(date) {
+                const pad = (n) => (n < 10 ? '0' + n : n);
+                return date.getFullYear() + '-' +
+                       pad(date.getMonth() + 1) + '-' +
+                       pad(date.getDate()) + 'T' +
+                       pad(date.getHours()) + ':' +
+                       pad(date.getMinutes());
+            }
+
+            const confirmationMessage =
+                `Confirm Reservation Details:\n\n` +
+                `Customer: ${customerName}\n` +
+                `Hotel: ${hotelName}\n` +
+                `Room: ${roomName}\n` +
+                `From: ${fromDate.toLocaleString()}\n` +
+                `To: ${toDate.toLocaleString()}\n` +
+                `Duration: ${durationHours} hrs (~${totalDays.toFixed(2)} days)\n` +
+                `Rate: $${charges} per day\n` +
+                `Total Cost: $${totalCost}\n\n` +
+                `Proceed with reservation?`;
+
+            if (confirm(confirmationMessage)) {
+                const originalText = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+
+                $.ajax({
+                    url: '@Url.Action("ReserveRoom", "Reservations")',
+                    type: 'POST',
+                    data: {
+                        RoomId: roomId,
+                        Name: customerName,
+                        From: formatLocalDateTime(fromDate),
+                        To: formatLocalDateTime(toDate),
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => {
+                                $('#reservationModal').modal('hide');
+                                window.location.href = '/Reservations/ViewReservations';
+                            }, 1000);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function () {
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+                        toastr.error('An error occurred while processing your reservation');
+                    }
+                });
+            }
+        }
+
+        $(document).ready(function() {
+            $('#reservationModal').on('show.bs.modal', function() {
+                initializeModalDates();
+                $('#availableRoomsSection').addClass('d-none');
+                $('#noRoomsMessage').addClass('d-none');
+            });
+
+            $('#modalFromDate').on('change', function() {
+                validateModalDates();
+                updateModalDateInfo();
+            });
+
+            $('#modalToDate').on('change', function() {
+                validateModalDates();
+                updateModalDateInfo();
+            });
+
+            $('#searchRoomsForm').on('submit', function(e) {
+                e.preventDefault();
+                searchRooms();
+            });
+        });
     </script>
 }
