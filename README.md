@@ -39,32 +39,33 @@ Built with **ASP.NET MVC**, it provides a smooth interface for both hotel staff 
 ```bash
 git clone https://github.com/talhazubairasim/Hotel-Management.git
 cd Hotel-Management
-2️⃣ Open in Visual Studio
+````
+### 2️⃣ Open in Visual Studio
 Launch Visual Studio
 
 Open the solution file: Assignment.sln
 
-3️⃣ Configure the database
+### 3️⃣ Configure the database
 In Web.config, update the connection string if needed:
 
-xml
-Copy code
+````bash
 <connectionStrings>
     <add name="HotelDBContext" connectionString="Data Source=YOUR_SERVER;Initial Catalog=HotelDB;Integrated Security=True" providerName="System.Data.SqlClient" />
 </connectionStrings>
-4️⃣ Apply migrations (if using Entity Framework)
+````
+### 4️⃣ Apply migrations (if using Entity Framework)
 Open the Package Manager Console:
 
-bash
-Copy code
+````bash
 Update-Database
-5️⃣ Run the project
+````
+
+### 5️⃣ Run the project
 Press F5 or click Start Debugging in Visual Studio.
 The app will launch in your browser at http://localhost:XXXX/.
 
-🧩 Project Structure
-graphql
-Copy code
+## 🧩 Project Structure
+````graphql
 Hotel-Management/
 ├── Controllers/         # MVC Controllers handling requests
 ├── Models/              # Entity Framework Models
@@ -74,47 +75,34 @@ Hotel-Management/
 ├── App_Start/           # Route & Filter configurations
 ├── Web.config           # App configuration and connection strings
 └── Assignment.sln       # Visual Studio solution
-💡 Future Enhancements
-🔐 Add JWT-based Authentication & Authorization
+````
+## 💡 Future Enhancements
+### 🔐 Add JWT-based Authentication & Authorization
 
-📱 Integrate a React or Blazor frontend for modern UI
+### 📱 Integrate a React or Blazor frontend for modern UI
 
-☁️ Deploy on Azure or AWS using Docker containers
+### ☁️ Deploy on Azure or AWS using Docker containers
 
-📊 Add analytics dashboards for revenue and occupancy
+### 📊 Add analytics dashboards for revenue and occupancy
 
-👨‍💻 Author
-Talha Zubair Asim
+## 👨‍💻 Author
+### Talha Zubair Asim
 📧 talhazubairasim987@gmail.com
-🔗 LinkedIn
-💻 GitHub
 
-📄 License
-This project is open source and available under the MIT License.
-Feel free to use and modify it for educational or personal purposes.
-
-🌟 Contributing
-Contributions are welcome!
-If you'd like to enhance the system:
+## 🌟 Contributing
+### Contributions are welcome!
+**If you'd like to enhance the system:**
 
 Fork this repository
-
+````bash
 Create your feature branch (git checkout -b feature/YourFeatureName)
-
+````
 Commit your changes (git commit -m 'Add new feature')
 
 Push to your branch (git push origin feature/YourFeatureName)
 
 Open a Pull Request
 
-🖼️ Preview (Optional)
-Add screenshots of your app here if available:
-
-bash
-Copy code
-/screenshots/
-├── dashboard.png
-├── booking-page.png
-└── invoice.png
-💬 Summary
-The Hotel Management System demonstrates the fundamentals of enterprise web development using the ASP.NET MVC framework, suitable for both academic and professional use cases. It showcases clean architecture, ORM-based data access, and maintainable design patterns.
+## 📄 License
+This project is open source and available under the MIT License.
+Feel free to use and modify it for educational or personal purposes.
