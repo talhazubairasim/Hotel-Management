@@ -14,12 +14,10 @@ public class WebAppTests : IClassFixture<WebAppTests.Factory>
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Development");
-            builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Database:Provider"] = "InMemory",
-                ["Database:Name"] = "web-tests-" + Guid.NewGuid(),
-                ["Workflow:EnableAutomation"] = "false",
-            }));
+            // UseSetting applies before Program.cs reads configuration (ConfigureAppConfiguration is too late for that).
+            builder.UseSetting("Database:Provider", "InMemory");
+            builder.UseSetting("Database:Name", "web-tests-" + Guid.NewGuid());
+            builder.UseSetting("Workflow:EnableAutomation", "false");
         }
     }
 

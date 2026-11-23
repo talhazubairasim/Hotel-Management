@@ -173,7 +173,9 @@ public class ReservationService
         if (r.Invoice == null)
         {
             int sequence = await _db.Invoices.CountAsync(i => i.IssuedAt.Date == now.Date) + 1;
-            r.Invoice = _billing.CreateInvoice(r, r.Room.Charges, now, sequence);
+            var invoice = _billing.CreateInvoice(r, r.Room.Charges, now, sequence);
+            _db.Invoices.Add(invoice); // a new row: EF would otherwise treat the preset key as an existing one
+            r.Invoice = invoice;
         }
         await _db.SaveChangesAsync();
         return new WorkflowResult(true, $"{r.Name} checked out. Invoice {r.Invoice.InvoiceNumber} issued.", r);
