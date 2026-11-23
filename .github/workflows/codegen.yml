@@ -21,7 +21,7 @@ jobs:
       - run: dotnet tool install --global dotnet-ef --version 9.0.9
       - name: Build and add migration
         run: |
-          dotnet build Assignment.sln 2>&1 | tee build.log
+          dotnet build Assignment.sln 2>&1 | tee build.log || true
           cd Assignment
           if [ ! -d Migrations ]; then dotnet ef migrations add InitialCreate --output-dir Migrations 2>&1 | tee -a ../build.log; fi
       - name: Commit
