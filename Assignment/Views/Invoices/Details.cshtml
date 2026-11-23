@@ -1,0 +1,59 @@
+@model Invoice
+@{
+    ViewData["Title"] = "Invoice " + Model.InvoiceNumber;
+    string cur = ViewBag.Currency;
+    var r = Model.Reservation;
+}
+<div class="d-flex justify-content-between align-items-center mt-3 mb-3 no-print">
+    <a asp-action="Index" class="btn btn-link"><i class="fa fa-arrow-left"></i> All invoices</a>
+    <div class="d-flex gap-2">
+        @if (!Model.IsPaid)
+        {
+            <form asp-action="MarkPaid" asp-route-id="@Model.InvoiceId" method="post">
+                <button type="submit" class="btn btn-success"><i class="fa fa-check"></i> Mark as paid</button>
+            </form>
+        }
+        <button type="button" class="btn btn-outline-secondary" id="printInvoice"><i class="fa fa-print"></i> Print</button>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between mb-4">
+            <div>
+                <h2 class="h4 mb-1">@r.Room.Hotel.Name</h2>
+                <div class="text-muted">@r.Room.Hotel.Address</div>
+            </div>
+            <div class="text-end">
+                <h1 class="h4 mb-1">Invoice @Model.InvoiceNumber</h1>
+                <div>Issued @Model.IssuedAt.ToString("dd MMM yyyy HH:mm")</div>
+                <span class="badge @(Model.IsPaid ? "bg-success" : "bg-warning text-dark")">@(Model.IsPaid ? $"Paid {Model.PaidAt:dd MMM yyyy}" : "Unpaid")</span>
+            </div>
+        </div>
+        <p class="mb-4">
+            <strong>Billed to:</strong> @r.Name
+            @if (r.Customer?.Email != null) { <span>· @r.Customer.Email</span> }
+            @if (r.Customer?.Phone != null) { <span>· @r.Customer.Phone</span> }
+        </p>
+        <table class="table">
+            <thead><tr><th>Description</th><th class="text-end">Days</th><th class="text-end">Rate</th><th class="text-end">Amount</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>Room @r.Room.Name (@r.Room.Type), @r.From.ToString("dd MMM HH:mm") – @r.To.ToString("dd MMM HH:mm")</td>
+                    <td class="text-end">@Model.Nights.ToString("0.##")</td>
+                    <td class="text-end">@(cur)@Model.RoomRate.ToString("N2")</td>
+                    <td class="text-end">@(cur)@Model.Subtotal.ToString("N2")</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr><td colspan="3" class="text-end">Subtotal</td><td class="text-end">@(cur)@Model.Subtotal.ToString("N2")</td></tr>
+                <tr><td colspan="3" class="text-end">Tax (@Model.TaxRate.ToString("P0"))</td><td class="text-end">@(cur)@Model.Tax.ToString("N2")</td></tr>
+                <tr class="fw-bold"><td colspan="3" class="text-end">Total</td><td class="text-end">@(cur)@Model.Total.ToString("N2")</td></tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        document.getElementById('printInvoice').addEventListener('click', function () { window.print(); });
+    </script>
+}

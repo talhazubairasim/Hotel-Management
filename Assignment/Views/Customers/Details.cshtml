@@ -1,0 +1,42 @@
+@model Customer
+@{
+    ViewData["Title"] = Model.FullName;
+    var stays = Model.Reservations.OrderByDescending(r => r.From).ToList();
+    var invoiced = stays.Where(r => r.Invoice != null).Sum(r => r.Invoice!.Total);
+}
+<div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+    <h1 class="h3 mb-0"><i class="fa fa-user"></i> @Model.FullName</h1>
+    <div class="d-flex gap-2">
+        <a asp-controller="Reservations" asp-action="Create" asp-route-customerId="@Model.CustomerId" class="btn btn-primary"><i class="fa fa-calendar-plus"></i> Book a stay</a>
+        <a asp-action="Edit" asp-route-id="@Model.CustomerId" class="btn btn-outline-primary"><i class="fa fa-edit"></i> Edit</a>
+        @if (User.IsInRole(Roles.Admin) && !stays.Any())
+        {
+            <form asp-action="Delete" asp-route-id="@Model.CustomerId" method="post">
+                <button type="submit" class="btn btn-outline-danger" data-confirm="Delete @Model.FullName's profile?"><i class="fa fa-trash"></i> Delete</button>
+            </form>
+        }
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <dl class="mb-0">
+                    <dt>Email</dt><dd>@(Model.Email ?? "—")</dd>
+                    <dt>Phone</dt><dd>@(Model.Phone ?? "—")</dd>
+                    <dt>ID / passport</dt><dd>@(Model.IdentityNumber ?? "—")</dd>
+                    <dt>Address</dt><dd>@(Model.Address ?? "—")</dd>
+                    <dt>Notes</dt><dd>@(Model.Notes ?? "—")</dd>
+                    <dt>Guest since</dt><dd>@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
+                    <dt>Total invoiced</dt><dd>$@invoiced.ToString("N2")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header">Stays</div>
+            <div class="card-body"><partial name="_ReservationTable" model="stays" /></div>
+        </div>
+    </div>
+</div>

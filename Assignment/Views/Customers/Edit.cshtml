@@ -1,0 +1,48 @@
+@model CustomerViewModel
+@{
+    bool isNew = Model.CustomerId == null;
+    ViewData["Title"] = isNew ? "New guest" : "Edit guest";
+}
+<h1 class="h3 mt-3 mb-3"><i class="fa fa-user-edit"></i> @ViewData["Title"]</h1>
+<form asp-action="Save" method="post" novalidate class="card card-body">
+    <input type="hidden" asp-for="CustomerId" />
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="FullName" class="form-label"></label>
+            <input asp-for="FullName" class="form-control" />
+            <span asp-validation-for="FullName" class="text-danger small"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="IdentityNumber" class="form-label"></label>
+            <input asp-for="IdentityNumber" class="form-control" />
+            <span asp-validation-for="IdentityNumber" class="text-danger small"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Phone" class="form-label"></label>
+            <input asp-for="Phone" class="form-control" />
+            <span asp-validation-for="Phone" class="text-danger small"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Address" class="form-label"></label>
+            <input asp-for="Address" class="form-control" />
+            <span asp-validation-for="Address" class="text-danger small"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Notes" class="form-label"></label>
+            <textarea asp-for="Notes" rows="3" class="form-control"></textarea>
+            <span asp-validation-for="Notes" class="text-danger small"></span>
+        </div>
+    </div>
+    <div class="mt-3">
+        <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
+        <a asp-action="@(isNew ? "Index" : "Details")" asp-route-id="@Model.CustomerId" class="btn btn-link">Cancel</a>
+    </div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

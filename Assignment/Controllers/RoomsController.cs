@@ -1,5 +1,6 @@
-﻿using Assignment.Models;
+using Assignment.Models;
 using Assignment.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,6 +33,8 @@ namespace Assignment.Controllers
             }
         }
 
+        [Authorize(Roles = Roles.Admin)]
+
         public async Task<IActionResult> Create()
         {
             try
@@ -48,6 +51,7 @@ namespace Assignment.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Create(RoomViewModel model)
         {
             try
@@ -115,6 +119,8 @@ namespace Assignment.Controllers
             }
         }
 
+        [Authorize(Roles = Roles.Admin)]
+
         public async Task<IActionResult> Edit(Guid id)
         {
             try
@@ -144,6 +150,7 @@ namespace Assignment.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Edit(Guid id, RoomViewModel model)
         {
             try
@@ -238,6 +245,7 @@ namespace Assignment.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Delete(Guid id)
         {
             try
