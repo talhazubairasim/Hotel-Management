@@ -23,7 +23,7 @@ public class SecurityHeadersMiddleware
 
     public Task InvokeAsync(HttpContext context)
     {
-        string nonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
+        string nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)); // hex: no characters Razor would HTML-encode
         context.Items[NonceItemKey] = nonce;
 
         context.Response.OnStarting(() =>
