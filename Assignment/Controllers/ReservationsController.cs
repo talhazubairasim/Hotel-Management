@@ -1,211 +1,138 @@
-﻿using Assignment.Models;
+using Assignment.Models;
+using Assignment.Services;
 using Assignment.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Assignment.Controllers
 {
+    /// <summary>
+    /// Booking requests and the front-desk workflow. Receptionists create requests,
+    /// admins approve or reject them, and either role checks guests in and out.
+    /// </summary>
     public class ReservationsController : Controller
     {
         private readonly HotelManagementContext _context;
+        private readonly ReservationService _workflow;
 
-        public ReservationsController(HotelManagementContext context)
+        public ReservationsController(HotelManagementContext context, ReservationService workflow)
         {
             _context = context;
+            _workflow = workflow;
         }
 
-        public IActionResult Index()
+        private string CurrentUser => User.Identity?.Name ?? "unknown";
+
+        public IActionResult Index() => RedirectToAction(nameof(ViewReservations));
+
+        public async Task<IActionResult> ViewReservations(ReservationStatus? status, string? search)
         {
-            return RedirectToAction("ViewReservations");
+            IQueryable<Reservation> q = _context.Reservations
+                .Include(r => r.Room).ThenInclude(room => room.Hotel)
+                .Include(r => r.Customer)
+                .Include(r => r.Invoice)
+                .AsNoTracking();
+            if (status != null) q = q.Where(r => r.Status == status);
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                string s = search.Trim();
+                q = q.Where(r => r.Name.Contains(s) || r.Room.Name.Contains(s) || r.Room.Hotel.Name.Contains(s));
+            }
+            return View(new ReservationListViewModel
+            {
+                Reservations = await q.OrderByDescending(r => r.From).ToListAsync(),
+                Status = status,
+                Search = search,
+            });
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SearchRooms(DateTime FromDate, DateTime ToDate)
+        [HttpGet]
+        public async Task<IActionResult> Create(Guid? customerId)
         {
-            try
-            {
-                DateTime now = DateTime.Now;
-
-                if (FromDate < now)
-                {
-                    return Json(new { success = false, message = "From date cannot be in the past" });
-                }
-
-                if (ToDate < now)
-                {
-                    return Json(new { success = false, message = "To date cannot be in the past" });
-                }
-
-                if (FromDate >= ToDate)
-                {
-                    return Json(new { success = false, message = "To date must be after From date" });
-                }
-
-                List<Guid> overlappingReservations = await _context.Reservations
-                    .Where(r => !(r.To <= FromDate || r.From >= ToDate))
-                    .Select(r => r.RoomId)
-                    .ToListAsync();
-
-                var availableRooms = await _context.Rooms
-                    .Where(r => !overlappingReservations.Contains(r.RoomId) && r.IsActive)
-                    .Include(r => r.Hotel)
-                    .Select(r => new {
-                        roomId = r.RoomId,
-                        roomName = r.Name,
-                        hotelName = r.Hotel.Name,
-                        floor = r.Floor,
-                        type = r.Type,
-                        charges = r.Charges
-                    })
-                    .OrderBy(r => r.type == "Standard" ? 1 : r.type == "Deluxe" ? 2 : 3)
-                    .ThenBy(r => r.hotelName)
-                    .ToListAsync();
-
-                return Json(new
-                {
-                    success = true,
-                    rooms = availableRooms
-                });
-            }
-            catch (Exception)
-            {
-                return Json(new { success = false, message = "An error occurred while searching for rooms. Please try again." });
-            }
+            var model = new CreateReservationViewModel { CustomerId = customerId };
+            await LoadFormDataAsync(model);
+            return View(model);
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ReserveRoom(CreateReservationViewModel model)
+        public async Task<IActionResult> Create(CreateReservationViewModel model)
         {
-            try
+            if (ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                    return Json(new { success = false, message = "Invalid input data. Please check all fields." });
-
-                if (model.From >= model.To)
-                    return Json(new { success = false, message = "Invalid date range. 'To' date must be after 'From' date." });
-
-                List<Reservation> overlappingReservations = await _context.Reservations
-                    .Where(r => r.RoomId == model.RoomId &&
-                        !(r.To <= model.From || r.From >= model.To))
-                    .ToListAsync();
-
-                if (overlappingReservations.Any())
+                var result = await _workflow.BookAsync(
+                    new BookingRequest(model.RoomId!.Value, model.From, model.To, model.CustomerId, model.GuestName, model.GuestEmail, model.GuestPhone),
+                    CurrentUser, User.IsInRole(Roles.Admin));
+                if (result.Success)
                 {
-                    return Json(new { success = false, message = "This room is already reserved for the selected time period." });
+                    TempData["SuccessMessage"] = result.Message;
+                    return RedirectToAction(nameof(ViewReservations));
                 }
-
-                Room? room = await _context.Rooms
-                    .Where(r => r.IsActive)
-                    .Include(r => r.Hotel)
-                    .FirstOrDefaultAsync(r => r.RoomId == model.RoomId);
-
-                if (room == null)
-                {
-                    return Json(new { success = false, message = "Room not found." });
-                }
-
-                double totalDays = (model.To - model.From).TotalDays;
-                int durationHours = (int)Math.Ceiling((model.To - model.From).TotalHours);
-                double dailyRate = room.Charges;
-                double totalCharges = Math.Round(totalDays * (double)dailyRate, MidpointRounding.AwayFromZero);
-
-                Reservation reservation = new Reservation
-                {
-                    ReservationId = Guid.NewGuid(),
-                    Name = model.Name.Trim(),
-                    RoomId = model.RoomId,
-                    From = model.From,
-                    To = model.To,
-                    DurationHours = durationHours,
-                    Cost = totalCharges
-                };
-
-                _context.Reservations.Add(reservation);
-                await _context.SaveChangesAsync();
-
-                return Json(new
-                {
-                    success = true,
-                    message = $"Room {room.Name} at {room.Hotel.Name} reserved successfully for {model.Name}!",
-                    reservationId = reservation.ReservationId,
-                    cost = totalCharges,
-                    durationHours = durationHours,
-                    totalDays = Math.Round(totalDays, 2)
-                });
+                ModelState.AddModelError(string.Empty, result.Message);
             }
-            catch (Exception)
-            {
-                return Json(new { success = false, message = "An error occurred while processing your reservation. Please try again." });
-            }
+            await LoadFormDataAsync(model);
+            return View(model);
         }
 
-        public async Task<IActionResult> ViewReservations()
+        private async Task LoadFormDataAsync(CreateReservationViewModel model)
         {
-            try
-            {
-                List<Reservation> reservations = await _context.Reservations
-                    .Include(r => r.Room)
-                    .ThenInclude(room => room.Hotel)
-                    .AsNoTracking()
-                    .OrderByDescending(r => r.From)
-                    .ThenByDescending(r => r.ReservationId)
-                    .ToListAsync();
+            if (model.CustomerId is Guid id)
+                ViewBag.SelectedCustomer = await _context.Customers.FindAsync(id);
+            ViewBag.Rooms = model.To > model.From ? await _workflow.AvailableRoomsAsync(model.From, model.To) : new List<Room>();
+        }
 
-                return View(reservations);
-            }
-            catch (Exception)
+        /// <summary>Available rooms for the dates, used by the booking form as the dates change.</summary>
+        [HttpGet]
+        public async Task<IActionResult> SearchRooms(DateTime from, DateTime to)
+        {
+            if (to <= from) return Json(new { success = false, message = "Check-out must be after check-in." });
+            var rooms = await _workflow.AvailableRoomsAsync(from, to);
+            return Json(new
             {
-                TempData["ErrorMessage"] = "An error occurred while loading reservations.";
-                return View(new List<Reservation>());
-            }
+                success = true,
+                rooms = rooms.Select(r => new
+                {
+                    roomId = r.RoomId,
+                    roomName = r.Name,
+                    hotelName = r.Hotel.Name,
+                    floor = r.Floor,
+                    type = r.Type,
+                    charges = r.Charges,
+                    estimate = BillingService.CalculateCost(r.Charges, from, to),
+                }),
+            });
+        }
+
+        private IActionResult Done(WorkflowResult result)
+        {
+            TempData[result.Success ? "SuccessMessage" : "ErrorMessage"] = result.Message;
+            return RedirectToAction(nameof(ViewReservations));
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CancelReservation(Guid reservationId)
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> Approve(Guid id) => Done(await _workflow.ApproveAsync(id, CurrentUser));
+
+        [HttpPost]
+        [Authorize(Roles = Roles.Admin)]
+        public async Task<IActionResult> Reject(Guid id, string? reason) => Done(await _workflow.RejectAsync(id, CurrentUser, reason));
+
+        [HttpPost]
+        public async Task<IActionResult> Cancel(Guid id) => Done(await _workflow.CancelAsync(id, CurrentUser));
+
+        [HttpPost]
+        public async Task<IActionResult> CheckIn(Guid id) => Done(await _workflow.CheckInAsync(id));
+
+        [HttpPost]
+        public async Task<IActionResult> CheckOut(Guid id)
         {
-            try
+            var result = await _workflow.CheckOutAsync(id);
+            if (result.Success && result.Reservation?.Invoice != null)
             {
-                if (reservationId == Guid.Empty)
-                {
-                    return Json(new { success = false, message = "Invalid reservation ID" });
-                }
-
-                Reservation? reservation = await _context.Reservations
-                    .Include(r => r.Room)
-                    .ThenInclude(room => room.Hotel)
-                    .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
-
-                if (reservation == null)
-                {
-                    return Json(new { success = false, message = "Reservation not found" });
-                }
-
-                DateTime now = DateTime.Now;
-                if (reservation.To <= now)
-                {
-                    return Json(new { success = false, message = "Cannot cancel completed reservations" });
-                }
-
-                string customerName = reservation.Name;
-                string roomName = reservation.Room.Name;
-                string hotelName = reservation.Room.Hotel.Name;
-
-                _context.Reservations.Remove(reservation);
-                await _context.SaveChangesAsync();
-
-                return Json(new
-                {
-                    success = true,
-                    message = $"Reservation for {customerName} at {hotelName} - {roomName} has been cancelled successfully. The room is now available for booking."
-                });
+                TempData["SuccessMessage"] = result.Message;
+                return RedirectToAction("Details", "Invoices", new { id = result.Reservation.Invoice.InvoiceId });
             }
-            catch (Exception)
-            {
-                return Json(new { success = false, message = "An error occurred while cancelling the reservation. Please try again." });
-            }
+            return Done(result);
         }
     }
 }

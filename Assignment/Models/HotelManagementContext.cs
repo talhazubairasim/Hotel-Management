@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Assignment.Models;
 
-public partial class HotelManagementContext : DbContext
+public partial class HotelManagementContext : IdentityDbContext<AppUser>
 {
-    public HotelManagementContext()
-    {
-    }
-
     public HotelManagementContext(DbContextOptions<HotelManagementContext> options)
         : base(options)
     {
@@ -21,12 +16,35 @@ public partial class HotelManagementContext : DbContext
 
     public virtual DbSet<Room> Rooms { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=HotelManagementDb;Trusted_Connection=True;TrustServerCertificate=True;");
+    public virtual DbSet<Customer> Customers { get; set; }
+
+    public virtual DbSet<Invoice> Invoices { get; set; }
+
+    // The connection string comes from configuration (Web.config or appsettings.json); see Program.cs.
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder); // Identity tables
+
+        modelBuilder.Entity<Customer>(entity =>
+        {
+            entity.ToTable("Customer");
+            entity.HasIndex(e => e.Email);
+            entity.HasIndex(e => e.Phone);
+        });
+
+        modelBuilder.Entity<Invoice>(entity =>
+        {
+            entity.ToTable("Invoice");
+            entity.HasIndex(e => e.InvoiceNumber).IsUnique();
+            entity.Property(e => e.InvoiceNumber).HasMaxLength(30);
+            foreach (var p in new[] { nameof(Invoice.Nights), nameof(Invoice.RoomRate), nameof(Invoice.Subtotal), nameof(Invoice.Tax), nameof(Invoice.Total) })
+                entity.Property(p).HasPrecision(18, 2);
+            entity.Property(e => e.TaxRate).HasPrecision(5, 4);
+            entity.HasOne(e => e.Reservation).WithOne(r => r.Invoice)
+                .HasForeignKey<Invoice>(e => e.ReservationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
         modelBuilder.Entity<Hotel>(entity =>
         {
             entity.HasKey(e => e.HotelId).HasName("PK__Hotel__46023BDF362F3D19");
@@ -47,6 +65,16 @@ public partial class HotelManagementContext : DbContext
 
             entity.Property(e => e.ReservationId).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Name).HasMaxLength(50);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.CreatedBy).HasMaxLength(256);
+            entity.Property(e => e.DecisionBy).HasMaxLength(256);
+            entity.Property(e => e.DecisionNote).HasMaxLength(500);
+            entity.HasIndex(e => new { e.RoomId, e.From, e.To });
+            entity.HasIndex(e => e.Status);
+
+            entity.HasOne(d => d.Customer).WithMany(c => c.Reservations)
+                .HasForeignKey(d => d.CustomerId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasOne(d => d.Room).WithMany(p => p.Reservations)
                 .HasForeignKey(d => d.RoomId)

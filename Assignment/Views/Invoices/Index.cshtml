@@ -1,0 +1,40 @@
+@model List<Invoice>
+@{
+    ViewData["Title"] = "Billing";
+    string cur = ViewBag.Currency;
+    bool unpaid = ViewBag.Unpaid;
+}
+<div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+    <h1 class="h3 mb-0"><i class="fa fa-file-invoice-dollar"></i> Invoices</h1>
+    <div class="btn-group">
+        <a asp-action="Index" class="btn btn-outline-secondary @(unpaid ? "" : "active")">All</a>
+        <a asp-action="Index" asp-route-unpaid="true" class="btn btn-outline-secondary @(unpaid ? "active" : "")">Unpaid</a>
+    </div>
+</div>
+<p class="text-muted small">Invoices are issued automatically when a guest checks out.</p>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Invoice</th><th>Issued</th><th>Guest</th><th>Room</th><th class="text-end">Total</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var i in Model)
+                {
+                    <tr>
+                        <td><a asp-action="Details" asp-route-id="@i.InvoiceId">@i.InvoiceNumber</a></td>
+                        <td>@i.IssuedAt.ToString("dd MMM yyyy")</td>
+                        <td>@i.Reservation.Name</td>
+                        <td>@i.Reservation.Room.Hotel.Name · @i.Reservation.Room.Name</td>
+                        <td class="text-end fw-semibold">@(cur)@i.Total.ToString("N2")</td>
+                        <td><span class="badge @(i.IsPaid ? "bg-success" : "bg-warning text-dark")">@(i.IsPaid ? "Paid" : "Unpaid")</span></td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">No invoices yet.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

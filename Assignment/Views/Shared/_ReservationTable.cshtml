@@ -1,0 +1,36 @@
+@model IEnumerable<Reservation>
+@if (!Model.Any())
+{
+    <p class="text-muted mb-0">Nothing here.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr><th>Guest</th><th>Room</th><th>Stay</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (r.CustomerId != null)
+                            {
+                                <a asp-controller="Customers" asp-action="Details" asp-route-id="@r.CustomerId">@r.Name</a>
+                            }
+                            else
+                            {
+                                @r.Name
+                            }
+                        </td>
+                        <td>@r.Room.Hotel.Name · @r.Room.Name</td>
+                        <td class="small">@r.From.ToString("dd MMM HH:mm") → @r.To.ToString("dd MMM HH:mm")</td>
+                        <td><span class="badge @r.Status.BadgeClass()">@r.Status.Label()</span></td>
+                        <td><partial name="_ReservationActions" model="r" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

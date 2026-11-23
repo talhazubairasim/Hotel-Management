@@ -1,0 +1,45 @@
+@model LoginViewModel
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject IConfiguration Config
+@{
+    ViewData["Title"] = "Sign in";
+}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-4 text-center"><i class="fa fa-hotel text-primary"></i> Staff sign in</h1>
+                <form asp-action="Login" method="post" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" autocomplete="username" autofocus />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label"></label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Sign in</button>
+                </form>
+                @if (Env.IsDevelopment() && Config.GetValue("Seed:DemoData", false))
+                {
+                    <div class="alert alert-info small mt-4 mb-0">
+                        <strong>Demo accounts</strong><br />
+                        Admin: @Config["Seed:Admin:Email"] / @Config["Seed:Admin:Password"]<br />
+                        Receptionist: @Config["Seed:Receptionist:Email"] / @Config["Seed:Receptionist:Password"]
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

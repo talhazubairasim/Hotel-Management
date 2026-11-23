@@ -1,0 +1,31 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Front desk";
+}
+<div class="d-flex justify-content-between align-items-center mt-3 mb-4">
+    <h1 class="h3 mb-0"><i class="fa fa-concierge-bell text-info"></i> Front desk</h1>
+    <div class="d-flex gap-2">
+        <a asp-controller="Reservations" asp-action="Create" class="btn btn-primary"><i class="fa fa-calendar-plus"></i> New booking</a>
+        <a asp-controller="Customers" asp-action="Create" class="btn btn-outline-primary"><i class="fa fa-user-plus"></i> New guest</a>
+    </div>
+</div>
+
+<div class="row g-3 text-center">
+    <div class="col-6 col-lg-3"><div class="card stat-card p-3"><h3>@Model.ArrivalsToday.Count</h3><p class="text-muted mb-0">Arrivals today</p></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-card p-3"><h3>@Model.DeparturesToday.Count</h3><p class="text-muted mb-0">Departures due</p></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-card p-3"><h3>@Model.InHouse.Count</h3><p class="text-muted mb-0">Guests in house</p></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-card p-3"><h3>@Model.PendingApprovalsCount</h3><p class="text-muted mb-0">Requests awaiting admin</p></div></div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header"><i class="fa fa-plane-arrival"></i> Arrivals (approved, ready to check in)</div>
+    <div class="card-body"><partial name="_ReservationTable" model="Model.ArrivalsToday" /></div>
+</div>
+<div class="card mt-3">
+    <div class="card-header"><i class="fa fa-plane-departure"></i> Departures due today</div>
+    <div class="card-body"><partial name="_ReservationTable" model="Model.DeparturesToday" /></div>
+</div>
+<div class="card mt-3">
+    <div class="card-header"><i class="fa fa-bed"></i> In house</div>
+    <div class="card-body"><partial name="_ReservationTable" model="Model.InHouse" /></div>
+</div>

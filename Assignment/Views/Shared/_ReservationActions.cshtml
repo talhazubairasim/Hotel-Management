@@ -1,0 +1,44 @@
+@model Reservation
+@{
+    bool isAdmin = User.IsInRole(Roles.Admin);
+}
+<div class="d-flex flex-wrap gap-1">
+    @if (Model.Status == ReservationStatus.Pending && isAdmin)
+    {
+        <form asp-controller="Reservations" asp-action="Approve" asp-route-id="@Model.ReservationId" method="post">
+            <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-check"></i> Approve</button>
+        </form>
+        <form asp-controller="Reservations" asp-action="Reject" asp-route-id="@Model.ReservationId" method="post">
+            <input type="hidden" name="reason" />
+            <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="Reject the request for @Model.Name?" data-confirm-reason>
+                <i class="fa fa-times"></i> Reject
+            </button>
+        </form>
+    }
+    @if (Model.Status == ReservationStatus.Approved)
+    {
+        <form asp-controller="Reservations" asp-action="CheckIn" asp-route-id="@Model.ReservationId" method="post">
+            <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-door-open"></i> Check in</button>
+        </form>
+    }
+    @if (Model.Status == ReservationStatus.CheckedIn)
+    {
+        <form asp-controller="Reservations" asp-action="CheckOut" asp-route-id="@Model.ReservationId" method="post">
+            <button type="submit" class="btn btn-sm btn-dark" data-confirm="Check out @Model.Name and issue the invoice?">
+                <i class="fa fa-file-invoice-dollar"></i> Check out
+            </button>
+        </form>
+    }
+    @if (Model.Status is ReservationStatus.Pending or ReservationStatus.Approved)
+    {
+        <form asp-controller="Reservations" asp-action="Cancel" asp-route-id="@Model.ReservationId" method="post">
+            <button type="submit" class="btn btn-sm btn-outline-secondary" data-confirm="Cancel the reservation for @Model.Name?">Cancel</button>
+        </form>
+    }
+    @if (Model.Invoice != null)
+    {
+        <a asp-controller="Invoices" asp-action="Details" asp-route-id="@Model.Invoice.InvoiceId" class="btn btn-sm btn-outline-primary">
+            <i class="fa fa-receipt"></i> @Model.Invoice.InvoiceNumber
+        </a>
+    }
+</div>

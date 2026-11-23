@@ -1,0 +1,32 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Admin dashboard";
+}
+<div class="d-flex justify-content-between align-items-center mt-3 mb-4">
+    <h1 class="h3 mb-0"><i class="fa fa-user-shield text-danger"></i> Admin dashboard</h1>
+    <div class="d-flex gap-2">
+        <a asp-controller="Reservations" asp-action="Create" class="btn btn-primary"><i class="fa fa-calendar-plus"></i> New booking</a>
+        <a asp-controller="Hotels" asp-action="Create" class="btn btn-outline-primary"><i class="fa fa-building"></i> Add hotel</a>
+        <a asp-controller="Rooms" asp-action="Create" class="btn btn-outline-primary"><i class="fa fa-bed"></i> Add room</a>
+    </div>
+</div>
+
+<div class="row g-3 text-center">
+    <div class="col-6 col-lg-3"><div class="card stat-card p-3"><h3>@Model.PendingApprovalsCount</h3><p class="text-muted mb-0">Awaiting approval</p></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-card p-3"><h3>@Model.OccupancyRate.ToString("P0")</h3><p class="text-muted mb-0">Occupancy (@Model.ActiveReservationsCount of @Model.RoomsCount rooms)</p></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-card p-3"><h3>$@Model.RevenueThisMonth.ToString("N2")</h3><p class="text-muted mb-0">Invoiced this month</p></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-card p-3"><h3>$@Model.UnpaidInvoicesTotal.ToString("N2")</h3><p class="text-muted mb-0">Unpaid invoices</p></div></div>
+</div>
+
+<div class="row g-3 mt-1 text-center">
+    <div class="col-4"><div class="card p-2"><strong>@Model.HotelsCount</strong><span class="text-muted small">Hotels</span></div></div>
+    <div class="col-4"><div class="card p-2"><strong>@Model.RoomsCount</strong><span class="text-muted small">Active rooms</span></div></div>
+    <div class="col-4"><div class="card p-2"><strong>@Model.TotalReservationsCount</strong><span class="text-muted small">Bookings all time</span></div></div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header bg-warning-subtle"><i class="fa fa-inbox"></i> Booking requests awaiting your approval</div>
+    <div class="card-body">
+        <partial name="_ReservationTable" model="Model.PendingApprovals" />
+    </div>
+</div>

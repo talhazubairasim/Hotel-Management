@@ -1,7 +1,10 @@
-﻿@model IEnumerable<Assignment.Models.Hotel>
+@model IEnumerable<Assignment.Models.Hotel>
 
 <h2>Hotels</h2>
-<p><a asp-action="Create" class="btn btn-success"><i class="fa fa-plus"></i> Add Hotel</a></p>
+@if (User.IsInRole(Roles.Admin))
+{
+    <p><a asp-action="Create" class="btn btn-success"><i class="fa fa-plus"></i> Add Hotel</a></p>
+}
 
 <div class="card">
     <div class="card-header bg-dark text-white">
@@ -53,6 +56,8 @@
                                 <span class="badge bg-primary">@h.TotalRooms</span>
                             </td>
                             <td>
+                                @if (User.IsInRole(Roles.Admin))
+                                {
                                 <a asp-action="Edit" asp-route-id="@h.HotelId" class="btn btn-sm btn-primary">
                                     <i class="fa fa-edit"></i> Edit
                                 </a>
@@ -62,6 +67,11 @@
                                         data-hotel-name="@h.Name">
                                     <i class="fa fa-trash"></i> Delete
                                 </button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">View only</span>
+                                }
                             </td>
                         </tr>
                     }

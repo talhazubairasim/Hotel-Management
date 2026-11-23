@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet restore Assignment.sln
+      - run: dotnet build Assignment.sln --no-restore -c Release -warnaserror:CS8602,CS8604
+      - run: dotnet test Assignment.sln --no-build -c Release --logger "console;verbosity=normal" --collect:"XPlat Code Coverage"
+      - name: Migrations match the model
+        run: |
+          dotnet tool install --global dotnet-ef --version 9.0.9
+          cd Assignment && dotnet ef migrations has-pending-model-changes
